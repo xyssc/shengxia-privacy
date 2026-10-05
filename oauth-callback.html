@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon Ads OAuth Callback</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f6f7f9;color:#1f2937;margin:0;padding:40px 20px}
+    .card{max-width:760px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:28px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+    h1{margin-top:0;font-size:26px}.ok{color:#08783e}.error{color:#b42318}
+    .label{font-weight:700;margin-top:20px;margin-bottom:8px}
+    .box{background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;padding:12px;word-break:break-all;min-height:22px}
+    button{margin-top:10px;padding:10px 16px;border:0;border-radius:8px;background:#ff9900;color:#111827;font-weight:700;cursor:pointer}
+    .note{margin-top:24px;font-size:14px;line-height:1.6;color:#4b5563}
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Amazon Ads OAuth Callback</h1>
+  <p id="status">正在读取 Amazon 返回的授权结果...</p>
+
+  <div id="successArea" style="display:none;">
+    <div class="label">Authorization Code</div>
+    <div id="code" class="box"></div>
+    <button id="copyCode">复制 Authorization Code</button>
+
+    <div class="label">State</div>
+    <div id="state" class="box"></div>
+
+    <p class="note">
+      授权码仅用于下一步由 ERP 后端换取 Token。不要在此页面填写或保存 Client Secret。
+      Authorization Code 是一次性的，请尽快完成 Token 交换。
+    </p>
+  </div>
+
+  <div id="errorArea" style="display:none;">
+    <div class="label">Error</div>
+    <div id="error" class="box"></div>
+
+    <div class="label">Error Description</div>
+    <div id="errorDescription" class="box"></div>
+  </div>
+
+  <p class="note">
+    本页只读取当前 URL 中 Amazon 返回的 OAuth 参数，不会主动上传或保存授权码。
+    正式环境建议把 Token 交换逻辑放在安全的后端服务中。
+  </p>
+</div>
+
+<script>
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const state = params.get("state");
+  const error = params.get("error");
+  const errorDescription = params.get("error_description");
+
+  const status = document.getElementById("status");
+  const successArea = document.getElementById("successArea");
+  const errorArea = document.getElementById("errorArea");
+
+  if(code){
+    status.textContent = "Amazon Ads 授权成功，已收到 Authorization Code。";
+    status.className = "ok";
+    document.getElementById("code").textContent = code;
+    document.getElementById("state").textContent = state || "(未返回 state)";
+    successArea.style.display = "block";
+  }else if(error){
+    status.textContent = "Amazon Ads 授权失败或被取消。";
+    status.className = "error";
+    document.getElementById("error").textContent = error;
+    document.getElementById("errorDescription").textContent = errorDescription || "(无详细错误信息)";
+    errorArea.style.display = "block";
+  }else{
+    status.textContent = "当前 URL 中没有检测到 Authorization Code。请从 Amazon OAuth 授权流程进入本页面。";
+    status.className = "error";
+  }
+
+  const btn = document.getElementById("copyCode");
+  btn.addEventListener("click", async function(){
+    if(!code) return;
+    try{
+      await navigator.clipboard.writeText(code);
+      btn.textContent = "已复制";
+    }catch(e){
+      btn.textContent = "复制失败，请手动复制";
+    }
+  });
+})();
+</script>
+</body>
+</html>
